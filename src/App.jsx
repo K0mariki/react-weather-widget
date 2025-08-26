@@ -10,6 +10,12 @@ function App() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (!city.trim()) {
+      setError(null);
+      setWeatherData(null);
+      return;
+    }
+
     async function getWeatherData() {
       setLoading(true);
       try {
