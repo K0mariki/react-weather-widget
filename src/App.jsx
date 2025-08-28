@@ -4,13 +4,31 @@ import "./index.css";
 const KEY = "4d60475808d140eb9ff192950252508";
 
 function App() {
-  const [city, setCity] = useState("Москва");
+  const [city, setCity] = useState("");
   const [weatherData, setWeatherData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [coords, setCoords] = useState(null);
 
   useEffect(() => {
-    if (!city.trim()) {
+    if (!navigator.geolocation) {
+      setError("Geolication is not supported by your browser");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setCoords({ latitude, longitude });
+      },
+      (err) => {
+        console.error(err.message);
+        setError("Не удалось получить твою геолокацию");
+      }
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!city.trim() && !coords) {
       setError(null);
       setWeatherData(null);
       return;
@@ -19,8 +37,12 @@ function App() {
     async function getWeatherData() {
       setLoading(true);
       try {
+        const query = city.trim()
+          ? city
+          : `${coords.latitude},${coords.longitude}`;
+
         const res = await fetch(
-          `http://api.weatherapi.com/v1/current.json?key=${KEY}&q=${city}`
+          `http://api.weatherapi.com/v1/current.json?key=${KEY}&q=${query}`
         );
         setError(null);
         if (!res.ok) {
@@ -35,7 +57,7 @@ function App() {
       }
     }
     getWeatherData();
-  }, [city]);
+  }, [city, coords]);
 
   function renderLoading() {
     return <p>Загрузка...</p>;
