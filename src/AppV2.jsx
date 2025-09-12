@@ -27,9 +27,9 @@ function App() {
     );
   }, []);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const signal = controller.signal;
+  async function handleCityChange(e) {
+    const newCity = e.target.value;
+    setCity(newCity);
 
     if (!city.trim() && !coords) {
       setError(null);
@@ -37,33 +37,27 @@ function App() {
       return;
     }
 
-    async function getWeatherData() {
-      setLoading(true);
-      try {
-        const query = city.trim()
-          ? city
-          : `${coords.latitude},${coords.longitude}`;
+    setLoading(true);
+    try {
+      const query = newCity.trim()
+        ? city
+        : `${coords.latitude},${coords.longitude}`;
 
-        const res = await fetch(
-          `http://api.weatherapi.com/v1/current.json?key=${KEY}&q=${query}`,
-          { signal }
-        );
-        setError(null);
-        if (!res.ok) {
-          throw new Error("Введите корректное название города");
-        }
-        const data = await res.json();
-        setWeatherData(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      const res = await fetch(
+        `http://api.weatherapi.com/v1/current.json?key=${KEY}&q=${query}`
+      );
+      setError(null);
+      if (!res.ok) {
+        throw new Error("Введите корректное название города");
       }
+      const data = await res.json();
+      setWeatherData(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-    getWeatherData();
-
-    return () => controller.abort();
-  }, [city, coords]);
+  }
 
   function renderLoading() {
     return <p>Загрузка...</p>;
@@ -107,7 +101,7 @@ function App() {
               placeholder="Введите название города"
               className="search-input"
               value={city}
-              onChange={(event) => setCity(event.target.value)}
+              onChange={handleCityChange}
             />
           </div>
         </div>
